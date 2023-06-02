@@ -5,6 +5,16 @@ Doorkeeper.configure do
   # Check the list of supported ORMs here: https://github.com/doorkeeper-gem/doorkeeper#orms
   orm :active_record
 
+  resource_owner_from_credentials do |_routes|
+    # https://github.com/doorkeeper-gem/doorkeeper/wiki/Using-Resource-Owner-Password-Credentials-flow
+    request.params[:user] = { email: request.params[:email], password: request.params[:password] }
+    request.env["warden"].logout(:user)
+    request.env["devise.allow_params_authentication"] = true
+    # Set `store: false` to stop Warden from storing user in session
+    # https://github.com/doorkeeper-gem/doorkeeper/issues/475#issuecomment-305517549
+    request.env["warden"].authenticate!(scope: :user, store: false)
+  end
+
   # This block will be called to check whether the resource owner is authenticated or not.
   resource_owner_authenticator do
     current_user || warden.authenticate!(scope: :user)
@@ -115,7 +125,7 @@ Doorkeeper.configure do
   # Use a custom class for generating the access token.
   # See https://doorkeeper.gitbook.io/guides/configuration/other-configurations#custom-access-token-generator
   #
-  # access_token_generator '::Doorkeeper::JWT'
+  access_token_generator '::Doorkeeper::JWT'
 
   # The controller +Doorkeeper::ApplicationController+ inherits from.
   # Defaults to +ActionController::Base+ unless +api_only+ is set, which changes the default to
@@ -216,7 +226,7 @@ Doorkeeper.configure do
   # `grant_type` - the grant type of the request (see Doorkeeper::OAuth)
   # `scopes` - the requested scopes (see Doorkeeper::OAuth::Scopes)
   #
-  # use_refresh_token
+  use_refresh_token
 
   # Provide support for an owner to be assigned to each registered application (disabled by default)
   # Optional parameter confirmation: true (default: false) if you want to enforce ownership of
@@ -232,6 +242,8 @@ Doorkeeper.configure do
   #
   # default_scopes  :public
   # optional_scopes :write, :update
+  default_scopes :read
+  optional_scopes :write
 
   # Allows to restrict only certain scopes for grant_type.
   # By default, all the scopes will be available for all the grant types.
@@ -246,7 +258,7 @@ Doorkeeper.configure do
   # not in configuration, i.e. +default_scopes+ or +optional_scopes+.
   # (disabled by default)
   #
-  # enforce_configured_scopes
+  enforce_configured_scopes
 
   # Change the way client credentials are retrieved from the request object.
   # By default it retrieves first from the `HTTP_AUTHORIZATION` header, then
@@ -292,7 +304,8 @@ Doorkeeper.configure do
   #
   # You can completely disable this feature with:
   #
-  # allow_blank_redirect_uri false
+  # For API call
+  allow_blank_redirect_uri true
   #
   # Or you can define your custom check:
   #
@@ -348,6 +361,7 @@ Doorkeeper.configure do
   #   https://datatracker.ietf.org/doc/html/rfc6819#section-4.4.3
   #
   # grant_flows %w[authorization_code client_credentials]
+  grant_flows %w[password]
 
   # Allows to customize OAuth grant flows that +each+ application support.
   # You can configure a custom block (or use a class respond to `#call`) that must
@@ -507,3 +521,40 @@ Doorkeeper.configure do
   #
   # realm "Doorkeeper"
 end
+
+Doorkeeper::JWT.configure do
+  # Set the payload for the JWT token. This should contain unique information
+  # about the user. Defaults to a randomly generated token in a hash:
+  #     { token: "RANDOM-TOKEN" }
+  token_payload do |opts|
+    user = User.find(opts[:resource_owner_id])
+
+    {
+        iss: 'My App', # issuer
+        iat: Time.current.utc.to_i, # issued at
+
+        # @see JWT reserved claims - https://tools.ietf.org/html/draft-jones-json-web-token-07#page-7
+        jti: SecureRandom.uuid, # JWT ID
+
+        user: {
+            id: user.id,
+            email: user.email
+        }
+    }
+  end
+
+  # Optionally set additional headers for the JWT. See
+  # https://tools.ietf.org/html/rfc7515#section-4.1
+  token_headers do |opts|
+    { kid: opts[:application][:uid] }
+  end
+
+  # Set the encryption secret. This would be shared with any other applications
+  # that should be able to read the payload of the token. Defaults to "secret".
+  secret_key ENV['DOORKEEPER_JWT_SECRET']
+
+  # Specify encryption type (https://github.com/progrium/ruby-jwt). Defaults to
+  # `nil`.
+  encryption_method :hs512
+end
+

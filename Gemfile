@@ -77,3 +77,7 @@ end
 gem "devise", "~> 4.9"
 
 gem "doorkeeper", "~> 5.6"
+gem "doorkeeper-jwt", "~> 0.4.1"
+
+gem 'api', path: 'vendor/engines/api'
+
