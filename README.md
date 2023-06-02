@@ -1,24 +1,32 @@
-# README
+# DEMO
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+# Prerequisite
+- `ruby` 3.2.2
+- `node` 18.x
 
-Things you may want to cover:
+# Local Development
 
-* Ruby version
+```sh
+# setup the DB
+rails db:create
+rails db:migrate
 
-* System dependencies
+# start the server
+foreman start
+```
 
-* Configuration
+# Steps
 
-* Database creation
+## Create a project
 
-* Database initialization
+```sh
+rails new my-rails-app --database=postgresql --javascript=esbuild --css=bootstrap
+```
 
-* How to run the test suite
+## Install Devise
 
-* Services (job queues, cache servers, search engines, etc.)
+https://github.com/heartcombo/devise#getting-started
 
-* Deployment instructions
+## Install Doorkeeper 
 
-* ...
+https://doorkeeper.gitbook.io/guides/ruby-on-rails/getting-started
