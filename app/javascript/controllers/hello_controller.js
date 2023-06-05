@@ -13,6 +13,7 @@ export default class extends Controller {
             {
                 received: (data) => {
                     console.log('received dummy', data)
+                    this.element.textContent = JSON.stringify(data)
                 }
             }
         )
