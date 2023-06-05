@@ -1,4 +1,5 @@
-<div id="<%= dom_id post %>">
+<%= turbo_stream_from post %>
+<%= turbo_frame_tag post do %>
   <p>
     <strong>Title:</strong>
     <%= post.title %>
@@ -8,5 +9,4 @@
     <strong>Content:</strong>
     <%= post.content %>
   </p>
-
-</div>
+<% end %>
