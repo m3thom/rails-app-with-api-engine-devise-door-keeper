@@ -12,8 +12,10 @@
 rails db:create
 rails db:migrate
 
+# !IMPORTANT! setup .env.development file according to .env.template
+
 # start the server
-foreman start
+bin/dev
 ```
 
 # Steps
@@ -120,7 +122,53 @@ bundle add doorkeeper-jwt
 
 Look at `config/initializers/doorkeeper.rb` and `vendor/engines/api/config/initializers/doorkeeper.rb`
 
-# Test if everything work together
+## Realtime-data
+
+### Default Rails ActionCable
+
+Add `broadcasts` to `app/models/post.rb`
+
+Look at `app/views/posts/index.html.erb` and `app/views/posts/_post.html.erb`
+
+Then try to play around with CRUD actions for `Post` model
+
+### Use `anycable` as an adapter
+
+Follow steps from the `Default Rails ActionCable` section first
+
+https://docs.anycable.io/rails/getting_started
+
+```shell
+bundle add "anycable-rails"
+bundle add "anycable-rails-jwt" 
+bundle add "dotenv-rails"
+bundle exec rails g anycable:setup
+```
+
+Look at `config/cable.yml` and `config/anycable.yml`
+
+At `config/environments/development.rb` and `config/environments/production.rb`
+
+Look at `config.action_cable.url` and `config.turbo.signed_stream_verifier_key` config
+
+### Custom channels and use `anycable-rails-jwt` for identifiers
+
+Comment out `AnyCable::Rails::Rack.middleware.use` in `config/initializers/anycable.rb`
+
+For the server, look at `app/channels/application_cable/connection.rb` and `app/channels/dummy_channel.rb`
+
+For the client, look at `app/javascript/controllers/hello_controller.js`
+
+Add to a page you want to test
+```html
+<div data-controller="hello"></div>
+```
+
+Try to run `ActionCable.server.broadcast "dummy", {test: "data from dummy channel"}` in the console
+
+You should see this message in the console `[ActionCable] Broadcasting to dummy: {:test=>"data from dummy channell"}`
+
+# Test if everything work together 
 
 ```shell
 # start the server
@@ -128,7 +176,7 @@ bin/dev
 ```
 
 ```shell
-# You should 
+# TODO 
 curl http://localhost:3000 \
    -H "Content-Type: application/json"
 ```
