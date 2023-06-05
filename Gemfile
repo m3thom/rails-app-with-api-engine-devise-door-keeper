@@ -81,3 +81,8 @@ gem "doorkeeper-jwt", "~> 0.4.1"
 
 gem 'api', path: 'vendor/engines/api'
 
+gem "anycable-rails", "~> 1.3"
+
+gem "anycable-rails-jwt", "~> 0.1.0"
+
+gem "dotenv-rails", "~> 2.8"
